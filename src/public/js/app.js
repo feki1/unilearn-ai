@@ -337,7 +337,7 @@ function bindEvents() {
   });
 
   $('quickDemoBtn').addEventListener('click', () => {
-    $('loginEmail').value = 'amina@horizon.edu';
+    $('loginEmail').value = 'feki@xmu.edu.my';
     $('loginPassword').value = 'UniPass2026!';
   });
 

@@ -4,7 +4,29 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export function seedXmumCurriculum(db, { hashPassword, generateDeterministicEmbedding }) {
+export function seedXmumCurriculum(db, { hashPassword, generateDeterministicEmbedding, exclusive = true } = {}) {
+  if (exclusive) {
+    // Remove placeholder HSU majors/subjects/files so only XMUM Bachelor of Robotics & Automation Engineering remains
+    db.prepare(`
+      DELETE FROM course_chunks_fts
+      WHERE chunk_id IN (
+        SELECT cc.id FROM course_chunks cc
+        JOIN subjects s ON s.id = cc.subject_id
+        WHERE s.major_id IN ('major_cs', 'major_ece', 'major_bio', 'major_econ')
+      )
+    `).run();
+    db.prepare("DELETE FROM majors WHERE id IN ('major_cs', 'major_ece', 'major_bio', 'major_econ')").run();
+    db.prepare(`
+      UPDATE universities
+      SET code = 'XMUM',
+          name = 'Xiamen University Malaysia',
+          motto = 'Pursue Excellence, Strive for Perfection',
+          allowed_domains_json = '["xmu.edu.my","xmu.edu.cn","horizon.edu","student.horizon.edu","novatech.edu"]'
+      WHERE id = 'uni_hsu'
+    `).run();
+    db.prepare("UPDATE students SET major_id = 'major_era' WHERE major_id IN ('major_cs', 'major_ece', 'major_bio', 'major_econ')").run();
+  }
+
   const existingMajor = db.prepare('SELECT id FROM majors WHERE code = ?').get('ERA');
   if (existingMajor) return;
 
