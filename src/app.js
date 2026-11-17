@@ -5,7 +5,8 @@ import { pathToFileURL } from 'node:url';
 import CONFIG, { ROOT_DIR } from './config.js';
 import { createDatabase } from './db/connection.js';
 import { initSchema } from './db/schema.js';
-import { seedDatabase } from './db/seed.js';
+import { generateDeterministicEmbedding, hashPassword, seedDatabase } from './db/seed.js';
+import { seedXmumCurriculum } from './db/seedXmum.js';
 import { authMiddleware } from './middleware/auth.js';
 import { deviceGuardMiddleware } from './middleware/deviceGuard.js';
 import { subscriptionGateMiddleware } from './middleware/subscriptionGate.js';
@@ -331,13 +332,17 @@ function handleBuiltInCatalogFallbacks(req, res, db) {
 export function createApp({
   dbPath = ':memory:',
   dataDir = CONFIG.dataDir,
-  seed = true
+  seed = true,
+  seedXmum = dbPath !== ':memory:'
 } = {}) {
   fs.mkdirSync(dataDir, { recursive: true });
   const db = createDatabase(dbPath);
   initSchema(db);
   if (seed !== false) {
     seedDatabase(db);
+  }
+  if (seedXmum) {
+    seedXmumCurriculum(db, { hashPassword, generateDeterministicEmbedding });
   }
 
   const realtimeHub = createRealtimeHub();

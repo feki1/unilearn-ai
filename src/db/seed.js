@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import CONFIG from '../config.js';
 import { runImmediateTransaction } from './connection.js';
+import { seedXmumCurriculum } from './seedXmum.js';
 
 export function hashPassword(password) {
   const salt = 'hsu-salt-2026';

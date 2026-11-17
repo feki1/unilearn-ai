@@ -22,7 +22,7 @@ export const CONFIG = {
     code: 'HSU',
     name: 'Horizon State University',
     motto: 'Knowledge, Integrity, Discovery Across Every Discipline',
-    allowedDomains: ['horizon.edu', 'student.horizon.edu', 'novatech.edu']
+    allowedDomains: ['horizon.edu', 'student.horizon.edu', 'novatech.edu', 'xmu.edu.my', 'xmu.edu.cn']
   },
 
   // Subscription Plans & Vouchers (F3)
