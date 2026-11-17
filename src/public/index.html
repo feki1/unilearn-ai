@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UniLearn AI — Horizon State University (HSU)</title>
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <!-- Top University & 1-PC + 1-Phone Security Bar -->
+    <header class="topbar" data-testid="university-header">
+      <div class="brand">
+        <span class="brand-badge">HSU</span>
+        <div>
+          <h1>UniLearn AI</h1>
+          <p class="subtitle">Horizon State University · Multi-Major Study &amp; Exam Platform</p>
+        </div>
+      </div>
+
+      <div class="status-strip">
+        <div id="deviceSlotBar" class="device-slot-bar" data-testid="device-slot-bar">
+          <span id="pcSlotBadge" class="slot-pill slot-empty">PC: Offline</span>
+          <span id="phoneSlotBadge" class="slot-pill slot-empty">Phone: Offline</span>
+        </div>
+        <div id="subscriptionBadge" class="sub-pill sub-none" data-testid="subscription-badge">Not Signed In</div>
+        <button id="logoutBtn" class="btn btn-ghost hidden" type="button">Sign Out</button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs (Visible when authenticated & subscribed) -->
+    <nav id="mainNav" class="main-nav hidden" aria-label="Primary Navigation">
+      <button class="nav-tab active" data-view="catalog">Courses &amp; Files</button>
+      <button class="nav-tab" data-view="ai-chat">BYO-AI Tutor</button>
+      <button class="nav-tab" data-view="slides">Slide Presenter</button>
+      <button class="nav-tab" data-view="research">Deep Research</button>
+      <button class="nav-tab" data-view="videos">AI Video Studio</button>
+      <button class="nav-tab" data-view="exams">Exam Prep</button>
+      <button class="nav-tab" data-view="subscription">Subscription &amp; Security</button>
+    </nav>
+
+    <!-- Global Alert Banner -->
+    <div id="globalAlert" class="alert hidden" role="alert"></div>
+
+    <!-- Preempted Session Lock Overlay -->
+    <section id="preemptedOverlay" class="lock-overlay hidden" data-testid="preempted-overlay">
+      <div class="lock-card">
+        <h2>Session Preempted</h2>
+        <p id="preemptedReason">Another device of the same class completed Facial Authentication and claimed this slot.</p>
+        <button id="reauthFromLockBtn" class="btn btn-primary" type="button">Return to Sign In</button>
+      </div>
+    </section>
+
+    <!-- Facial Authentication & Slot Takeover Modal -->
+    <section id="facialModal" class="modal-backdrop hidden" data-testid="facial-auth-modal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Facial Authentication Required</h2>
+          <button id="closeFacialModalBtn" class="btn btn-ghost" type="button">&times;</button>
+        </div>
+        <p id="facialModalMessage" class="muted">Verify your identity to transfer the active device slot.</p>
+        <div class="webcam-box">
+          <video id="facialVideo" autoplay playsinline muted class="webcam-video"></video>
+          <canvas id="facialCanvas" width="320" height="240" class="hidden"></canvas>
+          <div id="webcamStatus" class="webcam-status">Camera ready</div>
+        </div>
+        <div class="modal-actions">
+          <button id="verifyWebcamBtn" class="btn btn-primary" type="button">Capture Webcam &amp; Verify</button>
+          <button id="verifyMatchPresetBtn" class="btn btn-accent" type="button">Simulate Match Preset</button>
+          <button id="verifyImpostorPresetBtn" class="btn btn-danger" type="button">Simulate Impostor Preset</button>
+        </div>
+        <div id="facialResultMsg" class="muted"></div>
+      </div>
+    </section>
+
+    <!-- Main View Container -->
+    <main id="viewContainer" class="main-content">
+      <!-- View 1: Auth & Subscription Portal -->
+      <section id="view-auth" class="view active">
+        <div class="grid-2">
+          <div class="card">
+            <h2>University Sign In</h2>
+            <p class="muted">Restricted to @horizon.edu, @student.horizon.edu, and @novatech.edu</p>
+            <form id="loginForm" class="stack">
+              <label>University Email
+                <input id="loginEmail" type="email" value="amina@horizon.edu" required />
+              </label>
+              <label>Password
+                <input id="loginPassword" type="password" value="UniPass2026!" required />
+              </label>
+              <div class="row">
+                <button type="submit" class="btn btn-primary">Sign In</button>
+                <button id="quickDemoBtn" type="button" class="btn btn-ghost">Demo Student</button>
+              </div>
+            </form>
+            <div id="loginError" class="error-text"></div>
+          </div>
+
+          <div class="card">
+            <h2>New Student Registration</h2>
+            <form id="registerForm" class="stack">
+              <label>Full Name
+                <input id="regName" type="text" placeholder="Layla Mansour" required />
+              </label>
+              <label>University Email
+                <input id="regEmail" type="email" placeholder="layla@horizon.edu" required />
+              </label>
+              <label>Password
+                <input id="regPassword" type="password" value="UniPass2026!" required />
+              </label>
+              <label>Subscription Voucher (Optional)
+                <input id="regVoucher" type="text" placeholder="HSU-SCHOLAR-2026" />
+              </label>
+              <button type="submit" class="btn btn-accent">Create University Account</button>
+            </form>
+            <div id="registerError" class="error-text"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- View 2: Subscription & Security -->
+      <section id="view-subscription" class="view hidden">
+        <div class="grid-2">
+          <div class="card">
+            <h2>University Subscription Portal</h2>
+            <p id="subStatusDetail" class="muted">Checking subscription status...</p>
+            <form id="activateSubForm" class="stack">
+              <label>Plan
+                <select id="subPlanSelect">
+                  <option value="annual_scholar">Annual Scholar (\$99/yr)</option>
+                  <option value="semester_essential">Semester Essential (\$19/sem)</option>
+                  <option value="department_sponsored">Department Sponsored (Voucher)</option>
+                </select>
+              </label>
+              <label>Scholarship Voucher
+                <input id="subVoucherInput" type="text" placeholder="HSU-SCHOLAR-2026" />
+              </label>
+              <button type="submit" class="btn btn-primary">Activate Subscription</button>
+            </form>
+          </div>
+          <div class="card">
+            <h2>1-PC + 1-Phone Concurrent Security</h2>
+            <p class="muted">Enroll your facial biometrics or trigger a security verification check.</p>
+            <div class="row">
+              <button id="enrollFaceBtn" class="btn btn-accent" type="button">Enroll Face Biometrics</button>
+              <button id="anomalyTestBtn" class="btn btn-danger" type="button">Report Anomaly</button>
+            </div>
+            <div id="securityStatusOutput" class="code-box"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- View 3: Courses & File Ingestion -->
+      <section id="view-catalog" class="view hidden">
+        <div class="toolbar">
+          <select id="majorFilterSelect"><option value="">All Majors</option></select>
+          <input id="catalogSearchInput" type="search" placeholder="Search lessons, formulas, or files (FTS5)..." />
+          <button id="catalogSearchBtn" class="btn btn-primary" type="button">Search</button>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <h3>University Subjects</h3>
+            <div id="subjectsList" class="list-stack"></div>
+          </div>
+          <div class="card">
+            <h3 id="selectedSubjectTitle">Select a Subject</h3>
+            <div id="subjectLessonsList" class="list-stack"></div>
+            <hr />
+            <h4>Upload Course File (PDF, MD, TXT, CSV, JSON)</h4>
+            <form id="courseUploadForm" class="stack">
+              <input id="courseFileInput" type="file" />
+              <input id="courseFileName" type="text" placeholder="lecture-notes.md" />
+              <textarea id="courseFileText" rows="3" placeholder="Or paste lesson notes here..."></textarea>
+              <button type="submit" class="btn btn-accent">Ingest &amp; Index</button>
+            </form>
+          </div>
+        </div>
+        <div id="searchResultsBox" class="card hidden">
+          <h3>FTS5 Search Results</h3>
+          <div id="searchResultsList" class="list-stack"></div>
+        </div>
+      </section>
+
+      <!-- View 4: BYO-AI Chat Hub -->
+      <section id="view-ai-chat" class="view hidden">
+        <div class="grid-2">
+          <div class="card">
+            <h3>AI Providers (Built-In &amp; BYO-AI)</h3>
+            <div id="providersList" class="list-stack"></div>
+            <form id="addProviderForm" class="stack">
+              <select id="byoProviderType">
+                <option value="gemini">Google Gemini</option>
+                <option value="claude">Anthropic Claude</option>
+                <option value="kimi">Moonshot Kimi</option>
+                <option value="kiro">Kiro AI</option>
+                <option value="openai">OpenAI</option>
+                <option value="custom">Custom Endpoint</option>
+              </select>
+              <input id="byoModelName" type="text" placeholder="Model name (e.g. moonshot-v1-128k)" />
+              <input id="byoApiKey" type="password" placeholder="Your API Key (encrypted at rest)" required />
+              <button type="submit" class="btn btn-accent">Save BYO-AI Provider</button>
+            </form>
+          </div>
+
+          <div class="card">
+            <h3>AI Tutor Conversation</h3>
+            <div class="row">
+              <select id="chatProviderSelect"><option value="built_in">HSU Built-In Tutor</option></select>
+              <button id="newChatBtn" class="btn btn-ghost" type="button">New Thread</button>
+            </div>
+            <div id="chatMessagesBox" class="chat-box"></div>
+            <form id="chatUploadForm" class="row">
+              <input id="chatFileName" type="text" placeholder="Attach file name (e.g. hw2.txt)" />
+              <input id="chatFileContent" type="text" placeholder="Paste file text..." />
+              <button type="submit" class="btn btn-ghost">Attach File</button>
+            </form>
+            <form id="chatSendForm" class="row">
+              <input id="chatPromptInput" type="text" placeholder="Ask about your lesson or uploaded file..." required />
+              <button type="submit" class="btn btn-primary">Send</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- View 5: Interactive Slide Presenter -->
+      <section id="view-slides" class="view hidden">
+        <div class="card">
+          <div class="row">
+            <select id="slideSubjectSelect"></select>
+            <input id="slideTopicInput" type="text" placeholder="Custom topic (optional)" />
+            <button id="generateSlidesBtn" class="btn btn-primary" type="button">Generate Slide Deck</button>
+          </div>
+          <div id="slideStage" class="slide-stage">
+            <p class="muted">Generate or select a slide deck to begin presenting.</p>
+          </div>
+          <div class="row">
+            <button id="prevSlideBtn" class="btn btn-ghost" type="button">&larr; Previous</button>
+            <span id="slideCounter" class="muted">0 / 0</span>
+            <button id="nextSlideBtn" class="btn btn-ghost" type="button">Next &rarr;</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- View 6: Deep Research -->
+      <section id="view-research" class="view hidden">
+        <div class="card">
+          <div class="row">
+            <input id="researchQueryInput" type="text" placeholder="Research topic (e.g. Dijkstra vs Bellman-Ford)..." />
+            <button id="runResearchBtn" class="btn btn-primary" type="button">Run Deep Research</button>
+          </div>
+          <div id="researchOutputBox" class="stack"></div>
+        </div>
+      </section>
+
+      <!-- View 7: AI Video Studio -->
+      <section id="view-videos" class="view hidden">
+        <div class="card">
+          <div class="row">
+            <select id="videoSubjectSelect"></select>
+            <input id="videoTopicInput" type="text" placeholder="Video topic prompt..." />
+            <button id="generateVideoBtn" class="btn btn-primary" type="button">Generate AI Video</button>
+          </div>
+          <div id="videoPlayerBox" class="stack"></div>
+        </div>
+      </section>
+
+      <!-- View 8: Exam Prep -->
+      <section id="view-exams" class="view hidden">
+        <div class="card">
+          <div class="row">
+            <select id="examSubjectSelect"></select>
+            <button id="genQuizBtn" class="btn btn-primary" type="button">Generate Practice Quiz</button>
+            <button id="genFlashcardsBtn" class="btn btn-accent" type="button">Generate Flashcards</button>
+            <button id="genGuideBtn" class="btn btn-ghost" type="button">Study Guide</button>
+          </div>
+          <div id="examStudioBox" class="stack"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "unilearn-ai",
+  "version": "1.0.0",
+  "description": "UniLearn AI — Horizon State University Multi-Major Study, BYO-AI, 1-PC + 1-Phone Concurrent Device Security & Exam Platform",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test tests/api/*.test.js",
+    "test:m1": "node --test tests/api/subscription-device-facial.test.js",
+    "test:e2e": "node tests/e2e/run-e2e.js"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  }
+}

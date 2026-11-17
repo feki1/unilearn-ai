@@ -1,0 +1,8 @@
+node_modules/
+.agents/
+data/uploads/
+data/videos/
+*.log
+*.sqlite
+*.db
+.DS_Store
